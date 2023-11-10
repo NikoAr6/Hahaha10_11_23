@@ -1,53 +1,46 @@
-import asyncio
-import logging
-import sys
-from os import getenv
-from aiogram import Bot, Dispatcher, Router, types
-from aiogram.enums import ParseMode
-from aiogram.filters import CommandStart
-from aiogram.types import Message
-from aiogram.utils.markdown import hbold
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
+import telebot
+from telebot import types  # для указание типов
 
-#kb = ReplyKeyboardMarkup(resize_keyboard=True)
-
-# Bot token can be obtained via https://t.me/BotFather
-TOKEN = "6480715477:AAF0w8AQeVTVepQ2XtKMEwiEuFcd2iafHno"
-#b1 = KeyboardButton('/help')
-# All handlers should be attached to the Router (or Dispatcher)
-dp = Dispatcher()
-#kb.add(b1)
-
-HELP_COMMAND = """
-<b>/help</b> - <em>список команд</em>"""
-#@dp.message(commands=['help'])
-#async def help_command(message: types.Message):
-#    await message.answer(chat_id=message.from_user.id, text=HELP_COMMAND, parse_mode="HTML")
-#    await message.delete()
-#def start(bot, update):
-#    update.message.reply_text('Привет! Я информационный бот компании "Путешествия и туризм".\n'
-#                              'Для получения информации можете воспользоваться подсказками ниже!',
-#                              reply_markup=markup)
-@dp.message(CommandStart())
-async def command_start_handler(message: Message) -> None:
-
-    await message.answer(f"Hello, {hbold(message.from_user.full_name)}!")
+bot = telebot.TeleBot("6480715477:AAF0w8AQeVTVepQ2XtKMEwiEuFcd2iafHno")
 
 
-@dp.message()
-async def echo_handler(message: types.Message) -> None:
-        # Send a copy of the received message
-        await message.send_copy(chat_id=message.chat.id)
+@bot.message_handler(commands=['start'])
+def start(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn1 = types.KeyboardButton("👋 Поздороваться")
+    btn2 = types.KeyboardButton("❓ Задать вопрос")
+    markup.add(btn1, btn2)
+    bot.send_message(message.chat.id,
+                     text="Привет, {0.first_name}! Я тестовый бот для твоей статьи для habr.com".format(
+                         message.from_user), reply_markup=markup)
 
 
+@bot.message_handler(content_types=['text'])
+def func(message):
+    if (message.text == "👋 Поздороваться"):
+        bot.send_message(message.chat.id, text="Привеет.. Спасибо что читаешь статью!)")
+    elif (message.text == "❓ Задать вопрос"):
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        btn1 = types.KeyboardButton("Как меня зовут?")
+        btn2 = types.KeyboardButton("Что я могу?")
+        back = types.KeyboardButton("Вернуться в главное меню")
+        markup.add(btn1, btn2, back)
+        bot.send_message(message.chat.id, text="Задай мне вопрос", reply_markup=markup)
 
-async def main() -> None:
-    # Initialize Bot instance with a default parse mode which will be passed to all API calls
-    bot = Bot(TOKEN, parse_mode=ParseMode.HTML)
-    # And the run events dispatching
-    await dp.start_polling(bot)
+    elif (message.text == "Как меня зовут?"):
+        bot.send_message(message.chat.id, "У меня нет имени..")
+
+    elif message.text == "Что я могу?":
+        bot.send_message(message.chat.id, text="Поздороваться с читателями")
+
+    elif (message.text == "Вернуться в главное меню"):
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        button1 = types.KeyboardButton("👋 Поздороваться")
+        button2 = types.KeyboardButton("❓ Задать вопрос")
+        markup.add(button1, button2)
+        bot.send_message(message.chat.id, text="Вы вернулись в главное меню", reply_markup=markup)
+    else:
+        bot.send_message(message.chat.id, text="На такую комманду я не запрограммировал..")
 
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
-    asyncio.run(main())
+bot.polling(none_stop=True)
